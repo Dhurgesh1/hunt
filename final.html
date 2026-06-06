@@ -1,230 +1,102 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Mystery Vault</title>
+<title>Final Challenge</title>
 
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 
 <style>
-*{
-    margin:0;
-    padding:0;
-    box-sizing:border-box;
-    font-family:Arial,sans-serif;
-}
-
 body{
-    min-height:100vh;
+    background:#0f172a;
+    color:white;
+    font-family:Arial,sans-serif;
     display:flex;
     justify-content:center;
     align-items:center;
-    background:#0f172a;
-    color:white;
-    padding:20px;
+    min-height:100vh;
 }
 
 .card{
-    width:100%;
-    max-width:700px;
+    width:600px;
     background:#1e293b;
-    padding:40px;
+    padding:30px;
     border-radius:20px;
     text-align:center;
 }
 
-h1{
-    margin-bottom:20px;
-}
-
-p{
-    margin-bottom:20px;
-    line-height:1.7;
-}
-
 input{
     width:100%;
-    padding:14px;
-    border:none;
-    border-radius:10px;
-    margin-bottom:20px;
+    padding:12px;
+    margin:15px 0;
 }
 
 button{
-    padding:14px 30px;
-    border:none;
-    border-radius:10px;
-    background:#22c55e;
-    color:white;
+    padding:12px 24px;
     cursor:pointer;
-}
-
-.loader{
-    width:100%;
-    height:20px;
-    background:#334155;
-    border-radius:20px;
-    overflow:hidden;
-    margin-top:20px;
-}
-
-.progress{
-    width:0%;
-    height:100%;
-    background:#22c55e;
 }
 </style>
 </head>
 <body>
 
-<div class="card" id="card">
+<div class="card">
 
-<h1>🔐 Final Challenge</h1>
+<h1>Final Challenge</h1>
 
-<p>
-Use everything you've discovered.
-<br><br>
-Format:
-<br>
-<b>[crushname@answer]</b>
-</p>
+<input id="answer" placeholder="Enter code">
 
-<input
-id="answer"
-placeholder="Enter your code">
+<button id="submitBtn">Submit</button>
 
-<button id="submitBtn">
-Submit
-</button>
+<div id="status"></div>
 
 </div>
 
 <script>
 
 const supabase = window.supabase.createClient(
-"https://zngzzetiwrywjzosuhgs.supabase.co",
-"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpuZ3p6ZXRpd3J5d2p6b3N1aGdzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA3NDA4NDYsImV4cCI6MjA5NjMxNjg0Nn0.bh6BAMo6T1r4aAHDGy9y9fm_EmZPbkZSUFaHTNWLAwI"
+    "https://zngzzetiwrywjzosuhgs.supabase.co",
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpuZ3p6ZXRpd3J5d2p6b3N1aGdzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA3NDA4NDYsImV4cCI6MjA5NjMxNjg0Nn0.bh6BAMo6T1r4aAHDGy9y9fm_EmZPbkZSUFaHTNWLAwI"
 );
-document
-.getElementById("submitBtn")
-.addEventListener("click", submitAnswer);
+
+document.addEventListener("DOMContentLoaded", ()=>{
+
+    document
+    .getElementById("submitBtn")
+    .addEventListener("click", submitAnswer);
+
+});
 
 async function submitAnswer(){
 
-    const value =
-    document
-    .getElementById("answer")
-    .value
-    .trim();
+    const answer =
+    document.getElementById("answer").value;
 
-    if(!value){
-        alert("Enter a value");
-        return;
-    }
+    document.getElementById("status").innerHTML =
+    "Submitting...";
 
     const result =
     await supabase
     .from("treasure_submissions")
     .insert([
         {
-            answer:value,
+            answer:answer,
             status:"pending"
         }
     ])
     .select();
 
     if(result.error){
+
         console.error(result.error);
-        alert(result.error.message);
+
+        document.getElementById("status").innerHTML =
+        result.error.message;
+
         return;
     }
 
-    const id =
-    result.data[0].id;
-
-    document
-    .getElementById("card")
-    .innerHTML = `
-        <h1>⏳ Waiting For Approval</h1>
-
-        <div class="loader">
-            <div
-            class="progress"
-            id="progress">
-            </div>
-        </div>
-
-        <p style="margin-top:20px">
-            Submission ID: ${id}
-        </p>
-    `;
-
-    let width = 0;
-
-    setInterval(()=>{
-        width++;
-
-        if(width > 95){
-            width = 95;
-        }
-
-        const bar =
-        document
-        .getElementById("progress");
-
-        if(bar){
-            bar.style.width =
-            width + "%";
-        }
-
-    },500);
-
-    checkStatus(id);
-
-}
-
-function checkStatus(id){
-
-    setInterval(async()=>{
-
-        const result =
-        await supabase
-        .from("treasure_submissions")
-        .select("*")
-        .eq("id",id)
-        .single();
-
-        if(result.error){
-            return;
-        }
-
-        const row =
-        result.data;
-
-        if(row.status === "approved"){
-
-            document.body.innerHTML = `
-            <div class="card">
-                <h1>🎉 Congratulations</h1>
-                <h2>You solved the mystery.</h2>
-                <h1 style="margin-top:20px">
-                    BOY
-                </h1>
-            </div>
-            `;
-
-        }
-
-        if(row.status === "rejected"){
-
-            alert("Rejected");
-
-            location.reload();
-
-        }
-
-    },3000);
+    document.getElementById("status").innerHTML =
+    "Submitted successfully.";
 
 }
 
@@ -232,4 +104,3 @@ function checkStatus(id){
 
 </body>
 </html>
-
