@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Final Challenge</title>
+<style>
+body{
+    background:black;
+    color:white;
+    font-family:Arial;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+    height:100vh;
+}
+input{
+    padding:12px;
+    width:250px;
+    margin:15px;
+}
+button{
+    padding:12px 24px;
+}
+</style>
+</head>
+<body>
+
+<h1>Final Password</h1>
+
+<p>
+Use everything you've discovered.
+</p>
+
+<input id="answer" placeholder="Enter Password">
+
+<button onclick="checkAnswer()">
+Submit
+</button>
+
+<script>
+function checkAnswer(){
+
+let answer=document
+.getElementById("answer")
+.value
+.toUpperCase();
+
+if(answer==="BOY"){
+
+document.body.innerHTML=`
+<h1>🎉 Congratulations!</h1>
+<h2>You solved the treasure hunt.</h2>
+<p>The secret was:</p>
+<h1>BOY</h1>
+`;
+
+}else{
+
+alert("Incorrect. Try again.");
+
+}
+}
+</script>
+
+</body>
+</html>
