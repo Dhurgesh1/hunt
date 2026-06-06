@@ -3,12 +3,13 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Final Challenge</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Treasure Hunt Admin</title>
 
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 
 <style>
+
 *{
     margin:0;
     padding:0;
@@ -17,90 +18,76 @@
 }
 
 body{
-    min-height:100vh;
-    display:flex;
-    justify-content:center;
-    align-items:center;
     background:#0f172a;
     color:white;
     padding:20px;
-}
-
-.card{
-    width:100%;
-    max-width:700px;
-    background:#1e293b;
-    padding:35px;
-    border-radius:20px;
-    text-align:center;
 }
 
 h1{
     margin-bottom:20px;
 }
 
-p{
-    line-height:1.7;
-    margin-bottom:20px;
-}
-
-input{
-    width:100%;
-    padding:14px;
-    border:none;
-    border-radius:10px;
+.topbar{
+    display:flex;
+    gap:10px;
     margin-bottom:20px;
 }
 
 button{
-    padding:14px 28px;
+    padding:10px 16px;
     border:none;
-    border-radius:10px;
-    background:#22c55e;
-    color:white;
+    border-radius:8px;
     cursor:pointer;
 }
 
-.loader{
-    width:100%;
-    height:20px;
-    background:#334155;
-    border-radius:999px;
-    overflow:hidden;
-    margin-top:20px;
+.refresh{
+    background:#3b82f6;
+    color:white;
 }
 
-.progress{
-    width:0%;
-    height:100%;
+.approve{
     background:#22c55e;
-    transition:.5s;
+    color:white;
 }
+
+.reject{
+    background:#ef4444;
+    color:white;
+}
+
+.card{
+    background:#1e293b;
+    padding:15px;
+    border-radius:12px;
+    margin-bottom:15px;
+}
+
+.status{
+    margin-top:15px;
+    color:#94a3b8;
+}
+
+.error{
+    color:#f87171;
+}
+
 </style>
 </head>
 <body>
 
-<div class="card" id="card">
+<h1>🔐 Treasure Hunt Admin</h1>
 
-<h1>🔐 Final Challenge</h1>
-
-<p>
-Use everything you've discovered.
-<br><br>
-Format:
-<br>
-<b>[crushname@answer]</b>
-</p>
-
-<input
-id="answer"
-placeholder="Enter your code">
-
-<button id="submitBtn">
-Submit
-</button>
-
+<div class="topbar">
+    <button class="refresh" id="refreshBtn">
+        Refresh
+    </button>
 </div>
+
+<div id="status" class="status">
+    Loading...
+</div>
+
+<div id="submissions"></div>
 
 <script>
 
@@ -109,123 +96,133 @@ const supabase = window.supabase.createClient(
     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpuZ3p6ZXRpd3J5d2p6b3N1aGdzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA3NDA4NDYsImV4cCI6MjA5NjMxNjg0Nn0.bh6BAMo6T1r4aAHDGy9y9fm_EmZPbkZSUFaHTNWLAwI"
 );
 
+const submissions =
+document.getElementById("submissions");
+
+const statusBox =
+document.getElementById("status");
+
 document
-.getElementById("submitBtn")
-.addEventListener("click", submitAnswer);
+.getElementById("refreshBtn")
+.addEventListener("click", loadData);
 
-async function submitAnswer(){
+async function loadData(){
 
-    const answer =
-    document
-    .getElementById("answer")
-    .value
-    .trim();
-
-    if(!answer){
-        alert("Enter a code");
-        return;
-    }
+    statusBox.textContent =
+    "Loading submissions...";
 
     const {data,error} =
     await supabase
     .from("treasure_submissions")
-    .insert([
-        {
-            answer:answer,
-            status:"pending"
-        }
-    ])
-    .select();
+    .select("*")
+    .order("id",{ascending:false});
 
     if(error){
+
         console.error(error);
-        alert(error.message);
+
+        statusBox.innerHTML =
+        `<span class="error">${error.message}</span>`;
+
         return;
     }
 
-    const id = data[0].id;
+    submissions.innerHTML = "";
 
-    document
-    .getElementById("card")
-    .innerHTML = `
-        <h1>⏳ Waiting For Approval</h1>
+    if(!data.length){
 
-        <div class="loader">
-            <div
-            class="progress"
-            id="progress"></div>
-        </div>
+        submissions.innerHTML =
+        "<p>No submissions found.</p>";
 
-        <p style="margin-top:20px">
-            Submission ID: ${id}
-        </p>
-    `;
+        statusBox.textContent =
+        "0 submissions";
 
-    let width = 0;
+        return;
+    }
 
-    setInterval(()=>{
+    data.forEach(item=>{
 
-        if(width < 95){
+        const card =
+        document.createElement("div");
 
-            width++;
+        card.className = "card";
 
-            const bar =
-            document.getElementById("progress");
+        card.innerHTML = `
+            <h3>Submission #${item.id}</h3>
 
-            if(bar){
-                bar.style.width =
-                width + "%";
-            }
+            <p>
+                <strong>Answer:</strong>
+                ${item.answer}
+            </p>
 
-        }
+            <p>
+                <strong>Status:</strong>
+                ${item.status}
+            </p>
 
-    },500);
+            <br>
 
-    checkStatus(id);
+            <button
+                class="approve"
+                data-id="${item.id}">
+                Approve
+            </button>
+
+            <button
+                class="reject"
+                data-id="${item.id}">
+                Reject
+            </button>
+        `;
+
+        submissions.appendChild(card);
+
+    });
+
+    statusBox.textContent =
+    `${data.length} submissions loaded`;
 
 }
 
-function checkStatus(id){
+document.addEventListener("click", async (e)=>{
 
-    setInterval(async()=>{
+    if(e.target.classList.contains("approve")){
 
-        const {data,error} =
+        const id =
+        e.target.dataset.id;
+
         await supabase
         .from("treasure_submissions")
-        .select("*")
-        .eq("id",id)
-        .single();
+        .update({
+            status:"approved"
+        })
+        .eq("id",id);
 
-        if(error){
-            return;
-        }
+        loadData();
 
-        if(data.status === "approved"){
+    }
 
-            document.body.innerHTML = `
-                <div class="card">
-                    <h1>🎉 Congratulations</h1>
-                    <h2>You solved the mystery.</h2>
+    if(e.target.classList.contains("reject")){
 
-                    <h1 style="margin-top:20px">
-                        BOY
-                    </h1>
-                </div>
-            `;
+        const id =
+        e.target.dataset.id;
 
-        }
+        await supabase
+        .from("treasure_submissions")
+        .update({
+            status:"rejected"
+        })
+        .eq("id",id);
 
-        if(data.status === "rejected"){
+        loadData();
 
-            alert("Rejected");
+    }
 
-            location.reload();
+});
 
-        }
+loadData();
 
-    },3000);
-
-}
+setInterval(loadData,5000);
 
 </script>
 
