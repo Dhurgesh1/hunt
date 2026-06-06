@@ -1,119 +1,101 @@
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Mystery Vault</title>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 
 <style>
 *{
-margin:0;
-padding:0;
-box-sizing:border-box;
-font-family:Poppins,sans-serif;
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:Arial,sans-serif;
 }
 
 body{
-height:100vh;
-background:linear-gradient(135deg,#020617,#0f172a);
-display:flex;
-justify-content:center;
-align-items:center;
-color:white;
-overflow:hidden;
+    min-height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    background:#0f172a;
+    color:white;
+    padding:20px;
 }
 
 .card{
-width:90%;
-max-width:700px;
-background:rgba(255,255,255,0.05);
-backdrop-filter:blur(20px);
-padding:40px;
-border-radius:25px;
-border:1px solid rgba(255,255,255,.1);
-text-align:center;
+    width:100%;
+    max-width:700px;
+    background:#1e293b;
+    padding:40px;
+    border-radius:20px;
+    text-align:center;
 }
 
 h1{
-margin-bottom:20px;
+    margin-bottom:20px;
 }
 
 p{
-line-height:1.7;
-opacity:.9;
-margin-bottom:25px;
+    margin-bottom:20px;
+    line-height:1.7;
 }
 
 input{
-width:100%;
-padding:15px;
-border:none;
-outline:none;
-border-radius:12px;
-margin-bottom:20px;
-font-size:16px;
+    width:100%;
+    padding:14px;
+    border:none;
+    border-radius:10px;
+    margin-bottom:20px;
 }
 
 button{
-padding:15px 30px;
-border:none;
-border-radius:12px;
-background:#22c55e;
-color:white;
-font-size:16px;
-cursor:pointer;
+    padding:14px 30px;
+    border:none;
+    border-radius:10px;
+    background:#22c55e;
+    color:white;
+    cursor:pointer;
 }
 
 .loader{
-width:100%;
-height:20px;
-background:#1e293b;
-border-radius:20px;
-overflow:hidden;
-margin-top:20px;
+    width:100%;
+    height:20px;
+    background:#334155;
+    border-radius:20px;
+    overflow:hidden;
+    margin-top:20px;
 }
 
 .progress{
-width:0%;
-height:100%;
-background:#22c55e;
-transition:.5s;
-}
-
-.small{
-margin-top:15px;
-font-size:14px;
-opacity:.7;
+    width:0%;
+    height:100%;
+    background:#22c55e;
 }
 </style>
 </head>
 <body>
 
-<div class="card" id="main">
+<div class="card" id="card">
 
 <h1>🔐 Final Challenge</h1>
 
 <p>
 Use everything you've discovered.
-
-Now subtract 19 from the answer you got after adding.
-
-Format:
 <br><br>
+Format:
+<br>
 <b>[crushname@answer]</b>
-
-The code is: 'your crush from current school, you can't say no, or i dont have, it should be a boy, or if found doing something oversmart you wont get the answer!', 
-so now the Format is [crushname@the answer you got after adding the numbers]
-
-All the data is end to end crypted, and i as the develpoer of this, wont leak any of the private data like your crush name!
-You can feel free to share the data.
 </p>
 
-<input id="answer" placeholder="Enter your code">
+<input
+id="answer"
+placeholder="Enter your code">
 
-<button onclick="submitAnswer()">
+<button id="submitBtn">
 Submit
 </button>
 
@@ -125,108 +107,125 @@ const supabase = window.supabase.createClient(
 "https://zngzzetiwrywjzosuhgs.supabase.co",
 "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpuZ3p6ZXRpd3J5d2p6b3N1aGdzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA3NDA4NDYsImV4cCI6MjA5NjMxNjg0Nn0.bh6BAMo6T1r4aAHDGy9y9fm_EmZPbkZSUFaHTNWLAwI"
 );
+document
+.getElementById("submitBtn")
+.addEventListener("click", submitAnswer);
 
 async function submitAnswer(){
 
-const value =
-document.getElementById("answer").value;
+    const value =
+    document
+    .getElementById("answer")
+    .value
+    .trim();
 
-if(!value){
-alert("Enter a value");
-return;
-}
+    if(!value){
+        alert("Enter a value");
+        return;
+    }
 
-const {data,error} =
-await supabase
-.from("treasure_submissions")
-.insert([
-{
-answer:value,
-status:"pending"
-}
-])
-.select();
+    const result =
+    await supabase
+    .from("treasure_submissions")
+    .insert([
+        {
+            answer:value,
+            status:"pending"
+        }
+    ])
+    .select();
 
-if(error){
-alert(error.message);
-return;
-}
+    if(result.error){
+        console.error(result.error);
+        alert(result.error.message);
+        return;
+    }
 
-const id = data[0].id;
+    const id =
+    result.data[0].id;
 
-document.getElementById("main").innerHTML=`
+    document
+    .getElementById("card")
+    .innerHTML = `
+        <h1>⏳ Waiting For Approval</h1>
 
-<h1>⏳ Waiting For Approval</h1>
+        <div class="loader">
+            <div
+            class="progress"
+            id="progress">
+            </div>
+        </div>
 
-<div class="loader">
-<div class="progress" id="progress"></div>
-</div>
+        <p style="margin-top:20px">
+            Submission ID: ${id}
+        </p>
+    `;
 
-<p class="small">
-Submission ID: ${id}
-</p>
+    let width = 0;
 
-`;
+    setInterval(()=>{
+        width++;
 
-let width = 0;
+        if(width > 95){
+            width = 95;
+        }
 
-setInterval(()=>{
-if(width < 95){
-width += 1;
-const bar =
-document.getElementById("progress");
-if(bar){
-bar.style.width = width + "%";
-}
-}
-},500);
+        const bar =
+        document
+        .getElementById("progress");
 
-checkStatus(id);
+        if(bar){
+            bar.style.width =
+            width + "%";
+        }
+
+    },500);
+
+    checkStatus(id);
 
 }
 
 function checkStatus(id){
 
-setInterval(async()=>{
+    setInterval(async()=>{
 
-const {data} =
-await supabase
-.from("treasure_submissions")
-.select("*")
-.eq("id",id)
-.single();
+        const result =
+        await supabase
+        .from("treasure_submissions")
+        .select("*")
+        .eq("id",id)
+        .single();
 
-if(!data) return;
+        if(result.error){
+            return;
+        }
 
-if(data.status==="approved"){
+        const row =
+        result.data;
 
-document.body.innerHTML=`
+        if(row.status === "approved"){
 
-<div class="card">
+            document.body.innerHTML = `
+            <div class="card">
+                <h1>🎉 Congratulations</h1>
+                <h2>You solved the mystery.</h2>
+                <h1 style="margin-top:20px">
+                    BOY
+                </h1>
+            </div>
+            `;
 
-<h1>🎉 Congratulations</h1>
+        }
 
-<h2>You solved the mystery.</h2>
+        if(row.status === "rejected"){
 
-<h1 style="margin-top:20px">
-BOY
-</h1>
+            alert("Rejected");
 
-</div>
+            location.reload();
 
-`;
+        }
 
-}
-
-if(data.status==="rejected"){
-
-alert("Rejected");
-
-location.reload();
-
-}
-
-},3000);
+    },3000);
 
 }
 
@@ -234,3 +233,4 @@ location.reload();
 
 </body>
 </html>
+```
