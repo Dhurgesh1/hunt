@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Admin Panel</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:Poppins,sans-serif;
+}
+
+body{
+background:#020617;
+color:white;
+padding:30px;
+}
+
+h1{
+margin-bottom:20px;
+}
+
+.card{
+background:#0f172a;
+padding:20px;
+margin-bottom:15px;
+border-radius:15px;
+}
+
+button{
+padding:10px 15px;
+margin-top:10px;
+margin-right:10px;
+border:none;
+border-radius:10px;
+cursor:pointer;
+}
+
+.approve{
+background:#22c55e;
+color:white;
+}
+
+.reject{
+background:#ef4444;
+color:white;
+}
+
+.refresh{
+background:#3b82f6;
+color:white;
+margin-bottom:20px;
+}
+</style>
+</head>
+<body>
+
+<h1>🔒 Admin Panel</h1>
+
+<button class="refresh" onclick="loadData()">
+Refresh
+</button>
+
+<div id="container"></div>
+
+<script>
+
+const supabase = window.supabase.createClient(
+"https://zngzzetiwrywjzosuhgs.supabase.co",
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpuZ3p6ZXRpd3J5d2p6b3N1aGdzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA3NDA4NDYsImV4cCI6MjA5NjMxNjg0Nn0.bh6BAMo6T1r4aAHDGy9y9fm_EmZPbkZSUFaHTNWLAwI"
+);
+
+async function loadData(){
+
+const {data,error} =
+await supabase
+.from("treasure_submissions")
+.select("*")
+.order("id",{ascending:false});
+
+if(error){
+console.log(error);
+return;
+}
+
+let html="";
+
+data.forEach(row=>{
+
+html += `
+
+<div class="card">
+
+<h3>Submission #${row.id}</h3>
+
+<p>
+<b>Answer:</b>
+${row.answer}
+</p>
+
+<p>
+<b>Status:</b>
+${row.status}
+</p>
+
+<button
+class="approve"
+onclick="approve(${row.id})">
+Approve
+</button>
+
+<button
+class="reject"
+onclick="reject(${row.id})">
+Reject
+</button>
+
+</div>
+
+`;
+
+});
+
+document.getElementById("container").innerHTML = html;
+
+}
+
+async function approve(id){
+
+await supabase
+.from("treasure_submissions")
+.update({
+status:"approved"
+})
+.eq("id",id);
+
+loadData();
+
+}
+
+async function reject(id){
+
+await supabase
+.from("treasure_submissions")
+.update({
+status:"rejected"
+})
+.eq("id",id);
+
+loadData();
+
+}
+
+loadData();
+
+setInterval(loadData,5000);
+
+</script>
+
+</body>
+</html>
