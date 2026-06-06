@@ -1,41 +1,106 @@
+```html
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Admin</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Final Challenge</title>
 
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 
 <style>
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:Arial,sans-serif;
+}
+
 body{
+    min-height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:center;
     background:#0f172a;
     color:white;
-    font-family:Arial,sans-serif;
     padding:20px;
 }
 
-.item{
+.card{
+    width:100%;
+    max-width:700px;
     background:#1e293b;
-    margin-bottom:10px;
-    padding:15px;
+    padding:35px;
+    border-radius:20px;
+    text-align:center;
+}
+
+h1{
+    margin-bottom:20px;
+}
+
+p{
+    line-height:1.7;
+    margin-bottom:20px;
+}
+
+input{
+    width:100%;
+    padding:14px;
+    border:none;
     border-radius:10px;
+    margin-bottom:20px;
 }
 
 button{
-    margin-right:10px;
-    padding:8px 15px;
+    padding:14px 28px;
+    border:none;
+    border-radius:10px;
+    background:#22c55e;
+    color:white;
+    cursor:pointer;
+}
+
+.loader{
+    width:100%;
+    height:20px;
+    background:#334155;
+    border-radius:999px;
+    overflow:hidden;
+    margin-top:20px;
+}
+
+.progress{
+    width:0%;
+    height:100%;
+    background:#22c55e;
+    transition:.5s;
 }
 </style>
 </head>
 <body>
 
-<h1>Admin Panel</h1>
+<div class="card" id="card">
 
-<button id="refreshBtn">
-Refresh
+<h1>🔐 Final Challenge</h1>
+
+<p>
+Use everything you've discovered.
+<br><br>
+Format:
+<br>
+<b>[crushname@answer]</b>
+</p>
+
+<input
+id="answer"
+placeholder="Enter your code">
+
+<button id="submitBtn">
+Submit
 </button>
 
-<div id="list"></div>
+</div>
 
 <script>
 
@@ -44,99 +109,121 @@ const supabase = window.supabase.createClient(
     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpuZ3p6ZXRpd3J5d2p6b3N1aGdzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA3NDA4NDYsImV4cCI6MjA5NjMxNjg0Nn0.bh6BAMo6T1r4aAHDGy9y9fm_EmZPbkZSUFaHTNWLAwI"
 );
 
-document.addEventListener("DOMContentLoaded", ()=>{
+document
+.getElementById("submitBtn")
+.addEventListener("click", submitAnswer);
 
+async function submitAnswer(){
+
+    const answer =
     document
-    .getElementById("refreshBtn")
-    .addEventListener("click", loadData);
+    .getElementById("answer")
+    .value
+    .trim();
 
-    loadData();
-
-});
-
-async function loadData(){
-
-    const result =
-    await supabase
-    .from("treasure_submissions")
-    .select("*")
-    .order("id",{ascending:false});
-
-    console.log(result);
-
-    if(result.error){
-        alert(result.error.message);
+    if(!answer){
+        alert("Enter a code");
         return;
     }
 
-    const list =
-    document.getElementById("list");
+    const {data,error} =
+    await supabase
+    .from("treasure_submissions")
+    .insert([
+        {
+            answer:answer,
+            status:"pending"
+        }
+    ])
+    .select();
 
-    list.innerHTML = "";
+    if(error){
+        console.error(error);
+        alert(error.message);
+        return;
+    }
 
-    result.data.forEach(row=>{
+    const id = data[0].id;
 
-        const div =
-        document.createElement("div");
+    document
+    .getElementById("card")
+    .innerHTML = `
+        <h1>⏳ Waiting For Approval</h1>
 
-        div.className = "item";
+        <div class="loader">
+            <div
+            class="progress"
+            id="progress"></div>
+        </div>
 
-        div.innerHTML = `
-            <b>ID:</b> ${row.id}<br>
-            <b>Answer:</b> ${row.answer}<br>
-            <b>Status:</b> ${row.status}<br><br>
-        `;
+        <p style="margin-top:20px">
+            Submission ID: ${id}
+        </p>
+    `;
 
-        const approve =
-        document.createElement("button");
+    let width = 0;
 
-        approve.textContent =
-        "Approve";
+    setInterval(()=>{
 
-        approve.addEventListener(
-            "click",
-            async ()=>{
+        if(width < 95){
 
-                await supabase
-                .from("treasure_submissions")
-                .update({
-                    status:"approved"
-                })
-                .eq("id",row.id);
+            width++;
 
-                loadData();
+            const bar =
+            document.getElementById("progress");
 
+            if(bar){
+                bar.style.width =
+                width + "%";
             }
-        );
 
-        const reject =
-        document.createElement("button");
+        }
 
-        reject.textContent =
-        "Reject";
+    },500);
 
-        reject.addEventListener(
-            "click",
-            async ()=>{
+    checkStatus(id);
 
-                await supabase
-                .from("treasure_submissions")
-                .update({
-                    status:"rejected"
-                })
-                .eq("id",row.id);
+}
 
-                loadData();
+function checkStatus(id){
 
-            }
-        );
+    setInterval(async()=>{
 
-        div.appendChild(approve);
-        div.appendChild(reject);
+        const {data,error} =
+        await supabase
+        .from("treasure_submissions")
+        .select("*")
+        .eq("id",id)
+        .single();
 
-        list.appendChild(div);
+        if(error){
+            return;
+        }
 
-    });
+        if(data.status === "approved"){
+
+            document.body.innerHTML = `
+                <div class="card">
+                    <h1>🎉 Congratulations</h1>
+                    <h2>You solved the mystery.</h2>
+
+                    <h1 style="margin-top:20px">
+                        BOY
+                    </h1>
+                </div>
+            `;
+
+        }
+
+        if(data.status === "rejected"){
+
+            alert("Rejected");
+
+            location.reload();
+
+        }
+
+    },3000);
 
 }
 
@@ -144,3 +231,4 @@ async function loadData(){
 
 </body>
 </html>
+```
